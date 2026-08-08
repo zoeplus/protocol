@@ -4,6 +4,26 @@ This directory is the shared, machine-independent home for the blue-server
 transport helpers. Future agents should inspect this file and the two scripts
 before touching the remote.
 
+## Operating efficiency
+
+Prefer the shortest path to the requested deliverable. Do not perform
+exploratory checks when repository evidence or the operator's stated
+assumptions are sufficient. Limit verification to actions that prevent a
+likely destructive change or incorrect result. Do not broaden documentation
+scope. When the operator asks for commands or links, provide them immediately
+and stop unless execution was explicitly requested. After one network timeout,
+report it and use an alternative instead of repeatedly probing.
+
+## Progress control
+
+Keep both this `server` repository and the active controlled vault under
+step-by-step Git control. Check `git status` before starting work, make a small
+scoped commit after each verified milestone, and do not accumulate unrelated
+changes into one commit. Start the next step only when the current state is
+understood and recoverable. Synchronize only committed revisions, and verify
+that local and remote resolve to the intended commit. Never commit secrets,
+downloaded artifacts, logs, or generated results.
+
 ## Required environment
 
 The scripts read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from `.env.blue` or
@@ -16,6 +36,46 @@ Example, supplied by the operator from the controlled vault:
 set -a
 source /path/to/controlled-vault/.env.blue
 set +a
+```
+
+## Tsinghua package mirrors
+
+The following Tsinghua endpoints were checked from blue on 2026-08-08 and
+returned HTTP 200:
+
+```text
+https://pypi.tuna.tsinghua.edu.cn/simple/
+https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r/
+https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
+```
+
+Check the required endpoint from blue before starting a large installation:
+
+```bash
+curl -L --fail --silent --show-error --output /dev/null \
+  --connect-timeout 8 --max-time 25 \
+  --write-out '%{http_code} %{time_total}s %{speed_download}B/s\n' \
+  https://pypi.tuna.tsinghua.edu.cn/simple/
+
+curl -L --fail --silent --show-error --output /dev/null \
+  --connect-timeout 8 --max-time 25 \
+  --write-out '%{http_code} %{time_total}s %{speed_download}B/s\n' \
+  https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/linux-64/current_repodata.json
+```
+
+Prefer explicit per-command configuration instead of changing machine-wide
+Conda or pip settings:
+
+```bash
+/opt/conda/bin/conda create -n <env-name> python=<version> pip -y \
+  --override-channels \
+  -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+
+/opt/conda/bin/conda run --no-capture-output -n <env-name> \
+  python -m pip install -r <requirements-file> \
+  --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ## Git synchronization
