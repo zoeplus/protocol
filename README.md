@@ -17,9 +17,9 @@ report it and use an alternative instead of repeatedly probing.
 ## Progress control
 
 Keep both this `server` repository and the active controlled vault under
-step-by-step Git control. Check `git status` before starting work, make a small
-scoped commit after each verified milestone, and do not accumulate unrelated
-changes into one commit. Start the next step only when the current state is
+stage-by-stage Git control. Check `git status` before starting work, make a
+scoped commit after each verified stage, and do not accumulate unrelated
+changes into one commit. Start the next stage only when the current state is
 understood and recoverable. Synchronize only committed revisions, and verify
 that local and remote resolve to the intended commit. Never commit secrets,
 downloaded artifacts, logs, or generated results.
