@@ -14,6 +14,12 @@ scope. When the operator asks for commands or links, provide them immediately
 and stop unless execution was explicitly requested. After one network timeout,
 report it and use an alternative instead of repeatedly probing.
 
+Do not use `sudo` directly. The operator has sudo access even when the agent
+does not. If a system command is missing, ask the operator to install its
+normal system package first (for example, `sudo apt install rsync`) instead of
+installing the command into Conda or creating a workaround. Use Conda only for
+software that belongs in a project environment.
+
 ## Progress control
 
 Keep both this `server` repository and the active controlled vault under
