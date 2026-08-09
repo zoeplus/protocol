@@ -1,8 +1,8 @@
 # RAOM server operations
 
-This directory is the shared, machine-independent home for the blue-server
-transport helpers. Future agents should inspect this file and the two scripts
-before touching the remote.
+This directory is the canonical, machine-independent home for the blue-server
+transport helper templates. Future agents should inspect this file and the two
+scripts before touching the remote.
 
 ## Operating efficiency
 
@@ -32,9 +32,17 @@ downloaded artifacts, logs, or generated results.
 
 ## Required environment
 
-The scripts read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from `.env.blue` or
-the current shell. Keep `.env.blue` in the local secret/vault location; never
-commit it here. Optional `BLUE_GIT_DIR` selects the remote bare repository.
+Copy both `sync-blue.sh` and `fetch-blue.sh` into the root of each controlled
+project repository before using them. The scripts set `PROJECT_ROOT` to the
+directory containing their own copied file, so invoking the canonical copies
+from this `server` repository would operate on the wrong Git repository. Keep
+each project's copies under Git control so synchronization behavior is part of
+that project's reproducible configuration.
+
+The copied scripts read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from
+`.env.blue` in that project root or from the current shell. Keep `.env.blue`
+local and ignored; never commit it. Optional `BLUE_GIT_DIR` selects the remote
+bare repository.
 
 Example, supplied by the operator from the controlled vault:
 
@@ -86,14 +94,17 @@ Conda or pip settings:
 
 ## Git synchronization
 
-Run `./sync-blue.sh` from the LightThinker checkout after committing local
-source changes. It pushes the current branch to a bare Git repository on blue
-and fast-forwards the blue working checkout. It refuses to overwrite a remote
-directory that is not already a Git checkout.
+Run the project's copied `./sync-blue.sh` after committing local source
+changes. It pushes the current branch to a bare Git repository on blue and
+fast-forwards the blue working copy. It refuses to overwrite a remote
+directory that is not already a Git working copy.
 
-Run `./fetch-blue.sh` to copy existing `general_reasoning/results/` and selected
-LightThinker logs into a timestamped local snapshot. This is a one-way fetch
-from blue to the local machine; it does not delete remote files.
+Run the project's copied `./fetch-blue.sh` to copy the remote project's
+`results/` into a timestamped local snapshot. Set `BLUE_RESULTS_PATH` when the
+project uses another relative results directory. Set `BLUE_LOG_PATTERN` (for
+example, `statelm-*`) to fetch matching files from `~/logs`; logs are skipped
+when it is unset. This is a one-way fetch from blue to the local machine and
+does not delete remote files.
 
 Do not use rsync in both directions for source code. Use Git for source and
 `fetch-blue.sh` for results/logs.

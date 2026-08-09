@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BLUE_ENV_FILE="${BLUE_ENV_FILE:-$SCRIPT_DIR/.env.blue}"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BLUE_ENV_FILE="${BLUE_ENV_FILE:-$PROJECT_ROOT/.env.blue}"
 
 if [[ -f "$BLUE_ENV_FILE" ]]; then
   set -a
@@ -20,7 +20,7 @@ REMOTE_PORT="$BLUE_PORT"
 REMOTE_DIR="$BLUE_DIR"
 REMOTE_BARE_DIR="${BLUE_GIT_DIR:-${BLUE_DIR}.git}"
 
-cd "$SCRIPT_DIR"
+cd "$PROJECT_ROOT"
 
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "Error: commit or stash local changes before syncing." >&2
