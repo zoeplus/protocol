@@ -126,6 +126,91 @@ those patterns can leave multiprocessing CUDA children alive after the parent
 appears stopped. If `nvidia-smi` reports `[Not Found]` PIDs, host-level
 inspection or container restart by the administrator may be required.
 
+## Long-running launcher script standard
+
+Represent every service, evaluation, conversion, or other long-running task
+with a committed project-local launcher instead of an ad hoc command. The
+launcher is part of the reproducible experiment configuration and must expose
+machine- or run-specific values through environment variables.
+
+Logs always go to `$HOME/logs` by default on blue. Do not put runtime logs in
+the project repository, and do not require the operator to set a log directory
+for the normal case. A project may provide a documented environment-variable
+override, but its fallback must remain `$HOME/logs`:
+
+```bash
+LOG_DIR="${BLUE_LOG_DIR:-$HOME/logs}"
+JOB_NAME="${JOB_NAME:-descriptive-job-name}"
+LOG_FILE="$LOG_DIR/$JOB_NAME.log"
+PID_FILE="$LOG_FILE.pid"
+```
+
+Use a stable, descriptive `JOB_NAME` that identifies the service or experiment
+configuration. Allow an environment override so independent runs can use
+separate logs without editing the script. Derive `LOG_FILE` and `PID_FILE` from
+that name, create `LOG_DIR`, and reject a duplicate live job before launch.
+The PID written after `setsid` is also the process-group ID used for inspection
+and shutdown.
+
+A minimal launcher should follow this structure:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_DIR="${BLUE_LOG_DIR:-$HOME/logs}"
+JOB_NAME="${JOB_NAME:-descriptive-job-name}"
+LOG_FILE="$LOG_DIR/$JOB_NAME.log"
+PID_FILE="$LOG_FILE.pid"
+
+mkdir -p "$LOG_DIR"
+if [[ -s "$PID_FILE" ]] && kill -0 "$(<"$PID_FILE")" 2>/dev/null; then
+    echo "Job is already running as process group $(<"$PID_FILE")" >&2
+    exit 1
+fi
+
+# Perform cheap input, dependency, port, and service-health checks here.
+
+setsid --wait <command> >"$LOG_FILE" 2>&1 &
+pid=$!
+echo "$pid" >"$PID_FILE"
+
+echo "Job starting: PID/PGID=$pid"
+echo "Log: $LOG_FILE"
+echo "Monitor: tail -f '$LOG_FILE'"
+echo "Stop: kill -TERM -- -$pid"
+```
+
+For a bounded run, place `timeout` inside the same `setsid` group and include a
+grace period before forced termination:
+
+```bash
+setsid --wait timeout --verbose --signal=TERM --kill-after=120s 24h \
+  <command> >"$LOG_FILE" 2>&1 &
+```
+
+Launcher scripts should also follow these rules:
+
+- Use `set -euo pipefail` and quote paths and variable expansions.
+- Resolve project-relative paths from the launcher's own directory, not the
+  caller's current directory.
+- Keep hostnames, usernames, ports, model paths, limits, and job names
+  configurable through consistently named environment variables.
+- Validate required files and local service health before allocating expensive
+  resources or starting a long run.
+- Use `/opt/conda/bin/conda run --no-capture-output -n <env>` when invoking a
+  Conda environment so output reaches the designated log immediately.
+- Redirect both stdout and stderr to the single `LOG_FILE`; do not split the
+  diagnostic history across terminal output and repository files.
+- Print the PID/PGID, log path, monitor command, and process-group stop command
+  after launch.
+- If a job is resumable, use a stable output path and make completed-unit
+  detection explicit. Flush durable progress before marking a unit complete.
+- After stopping or failure, inspect the whole process group and GPU users;
+  never assume that disappearance of the launcher PID proves worker cleanup.
+- Do not combine `setsid` with nested `nohup`, a second background wrapper, or
+  per-worker PID files. One launcher owns one process group.
+
 ## Large downloads
 
 Agents must not start large downloads or long package installations. Prepare a
