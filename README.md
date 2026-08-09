@@ -128,6 +128,13 @@ inspection or container restart by the administrator may be required.
 
 ## Large downloads
 
+Agents must not start large downloads or long package installations. Prepare a
+committed, project-local script and let the operator run it. The script itself
+must contain the reproducible settings, mirror selection, retry behavior, log
+redirection, and PID recording needed for the operation. Agent responses should
+provide only the short script invocation and log-monitoring commands instead of
+wrapping a long list of settings in an ad hoc shell command.
+
 Check free space before downloading. Keep Hugging Face `.cache` files until a
 download completes; `.incomplete` files are resumable and should not be
 deleted during a transient network failure. Download one large artifact at a
