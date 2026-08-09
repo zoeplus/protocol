@@ -30,6 +30,48 @@ understood and recoverable. Synchronize only committed revisions, and verify
 that local and remote resolve to the intended commit. Never commit secrets,
 downloaded artifacts, logs, or generated results.
 
+## Environment configuration integrity
+
+Treat every project environment as a reproducible experiment artifact. A new
+container should be configurable from committed project documentation and
+configuration files without rediscovering package versions, installation
+order, mirrors, compatibility changes, or validation commands.
+
+Document an environment change in the project's README before considering the
+configuration stage complete. This applies to the initial environment and to
+every later package install, removal, upgrade, downgrade, rebuild, or
+agent-authored compatibility adjustment. The documentation must identify:
+
+- the environment name, Python version, and relevant CUDA, compiler, driver,
+  framework, and accelerator-library versions;
+- the exact installation order and commands, including Conda channels, pip
+  indexes, mirrors, build flags, and required operator-installed system
+  packages;
+- required environment-variable names and path conventions, while keeping
+  secret values and machine-specific connection details out of Git;
+- the upstream/original dependency configuration used as the starting point;
+- every deviation introduced during reproduction, including the changed
+  package version, reason, compatibility evidence, and date or revision;
+- verification commands and the observed success criteria, such as imports,
+  `pip check`, CUDA visibility, extension loading, and a minimal smoke test;
+- known limitations, optional components, and any step that must be performed
+  manually because it is large, privileged, or network-sensitive.
+
+Preserve upstream environment files when they are useful evidence. Do not
+silently overwrite the original configuration with a locally repaired one.
+Add a clearly named reproducible configuration such as `environment-blue.yml`,
+requirements or constraints files, or a lock file when it materially improves
+replayability, and explain its relationship to the upstream file in the
+README. The README remains the entry point: it must state which file to use,
+the command that consumes it, required follow-up steps, and which versions or
+steps are intentionally different from upstream.
+
+Keep documentation and machine-readable environment files synchronized in the
+same scoped Git commit. After changing the live environment, update these
+artifacts immediately and verify them before starting the next experiment.
+Do not leave the only record of a successful configuration in shell history,
+an agent conversation, a runtime log, or an uncommitted file.
+
 ## Required environment
 
 Copy both `sync-blue.sh` and `fetch-blue.sh` into the root of each controlled
