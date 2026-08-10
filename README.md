@@ -14,6 +14,11 @@ scope. When the operator asks for commands or links, provide them immediately
 and stop unless execution was explicitly requested. After one network timeout,
 report it and use an alternative instead of repeatedly probing.
 
+For operator-run downloads on a reliable local machine, provide the direct
+links and commands by default. Do not write a download script unless the
+download needs substantial retry or recovery logic, or covers enough files
+that a script materially improves correctness and repeatability.
+
 Do not use `sudo` directly. The operator has sudo access even when the agent
 does not. Report a missing required system command to the operator; do not
 invent an environment-level substitute.
