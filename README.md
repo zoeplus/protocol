@@ -15,10 +15,14 @@ and stop unless execution was explicitly requested. After one network timeout,
 report it and use an alternative instead of repeatedly probing.
 
 Do not use `sudo` directly. The operator has sudo access even when the agent
-does not. If a system command is missing, ask the operator to install its
-normal system package first (for example, `sudo apt install rsync`) instead of
-installing the command into Conda or creating a workaround. Use Conda only for
-software that belongs in a project environment.
+does not. Report a missing required system command to the operator; do not
+invent an environment-level substitute.
+
+Keep project documentation operational and concise. Record stable requirements,
+current configuration, and verified commands only. Do not add dated inventory,
+transient resource counts, investigation history, hypothetical fallback lists,
+or commentary that does not help reproduce the main task. Verify a script in
+its intended environment before documenting it as working.
 
 ## Progress control
 
@@ -50,8 +54,8 @@ agent-authored compatibility adjustment. The documentation must identify:
 - required environment-variable names and path conventions, while keeping
   secret values and machine-specific connection details out of Git;
 - the upstream/original dependency configuration used as the starting point;
-- every deviation introduced during reproduction, including the changed
-  package version, reason, compatibility evidence, and date or revision;
+- every stable deviation introduced during reproduction, including the changed
+  package version, reason, and compatibility evidence;
 - verification commands and the observed success criteria, such as imports,
   `pip check`, CUDA visibility, extension loading, and a minimal smoke test;
 - known limitations, optional components, and any step that must be performed
@@ -66,9 +70,10 @@ README. The README remains the entry point: it must state which file to use,
 the command that consumes it, required follow-up steps, and which versions or
 steps are intentionally different from upstream.
 
-Keep documentation and machine-readable environment files synchronized in the
-same scoped Git commit. After changing the live environment, update these
-artifacts immediately and verify them before starting the next experiment.
+Verify the live behavior first, then keep documentation and machine-readable
+environment files synchronized in the same scoped Git commit. After changing
+the live environment, update these artifacts before starting the next
+experiment.
 Do not leave the only record of a successful configuration in shell history,
 an agent conversation, a runtime log, or an uncommitted file.
 
