@@ -169,10 +169,13 @@ directory that is not already a Git working copy.
 
 Run the project's linked `./fetch-blue.sh` to copy the remote project's
 `results/` into a timestamped local snapshot. Set `BLUE_RESULTS_PATH` when the
-project uses another relative results directory. Set `BLUE_LOG_PATTERN` (for
+project uses another relative results directory. Set `BLUE_RESULTS_DEST` to an
+explicit local directory when the remote and local project-relative paths must
+remain identical. Set `BLUE_FETCH_DELETE=1` only when that local directory must
+exactly mirror the remote directory; this removes local entries that no longer
+exist remotely, but never deletes remote files. Set `BLUE_LOG_PATTERN` (for
 example, `statelm-*`) to fetch matching files from `~/logs`; logs are skipped
-when it is unset. This is a one-way fetch from blue to the local machine and
-does not delete remote files.
+when it is unset. This is always a one-way fetch from blue to the local machine.
 
 Do not use rsync in both directions for source code. Use Git for source and
 `fetch-blue.sh` for results/logs.

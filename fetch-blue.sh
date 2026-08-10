@@ -18,20 +18,28 @@ fi
 SNAPSHOT_TAG="${SNAPSHOT_TAG:-$(date +%Y%m%d_%H%M%S)}"
 FETCH_DEST="${FETCH_DEST:-$PROJECT_ROOT/results/blue-snapshots/$SNAPSHOT_TAG}"
 BLUE_RESULTS_PATH="${BLUE_RESULTS_PATH:-results}"
+BLUE_RESULTS_DEST="${BLUE_RESULTS_DEST:-$FETCH_DEST/results}"
+BLUE_FETCH_DELETE="${BLUE_FETCH_DELETE:-0}"
 BLUE_LOG_PATTERN="${BLUE_LOG_PATTERN:-}"
 RSYNC_RSH="ssh -p $BLUE_PORT"
+RSYNC_DELETE_ARGS=()
 
-mkdir -p "$FETCH_DEST/results"
+if [[ "$BLUE_FETCH_DELETE" == "1" ]]; then
+  RSYNC_DELETE_ARGS+=(--delete)
+fi
+
+mkdir -p "$BLUE_RESULTS_DEST"
 
 echo "Fetching project results from $BLUE_HOST:$BLUE_DIR/$BLUE_RESULTS_PATH"
 rsync \
   --archive \
   --human-readable \
   --partial \
+  "${RSYNC_DELETE_ARGS[@]}" \
   --info=stats2,progress2 \
   --rsh="$RSYNC_RSH" \
   "$BLUE_HOST:$BLUE_DIR/$BLUE_RESULTS_PATH/" \
-  "$FETCH_DEST/results/"
+  "$BLUE_RESULTS_DEST/"
 
 if [[ -n "$BLUE_LOG_PATTERN" ]]; then
   mkdir -p "$FETCH_DEST/logs"
