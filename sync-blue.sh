@@ -62,7 +62,11 @@ ssh -p "$REMOTE_PORT" "$REMOTE_HOST" "
       /*) ;;
       *) bare_path=\"\$HOME/\$bare_path\" ;;
     esac
-    git -C '$REMOTE_DIR' remote set-url origin \"\$bare_path\"
+    if git -C '$REMOTE_DIR' remote get-url origin >/dev/null 2>&1; then
+      git -C '$REMOTE_DIR' remote set-url origin \"\$bare_path\"
+    else
+      git -C '$REMOTE_DIR' remote add origin \"\$bare_path\"
+    fi
     git -C '$REMOTE_DIR' fetch origin '$BRANCH'
     git -C '$REMOTE_DIR' checkout '$BRANCH'
     git -C '$REMOTE_DIR' merge --ff-only 'origin/$BRANCH'

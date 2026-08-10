@@ -74,14 +74,30 @@ an agent conversation, a runtime log, or an uncommitted file.
 
 ## Required environment
 
-Copy both `sync-blue.sh` and `fetch-blue.sh` into the root of each controlled
-project repository before using them. The scripts set `PROJECT_ROOT` to the
-directory containing their own copied file, so invoking the canonical copies
-from this `server` repository would operate on the wrong Git repository. Keep
-each project's copies under Git control so synchronization behavior is part of
-that project's reproducible configuration.
+Keep `server/` and each controlled project as sibling directories under the
+same parent vault. Track project-local relative symbolic links to the canonical
+helpers instead of copying their implementations:
 
-The copied scripts read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from
+```bash
+cd /path/to/vault/project
+ln -s ../server/sync-blue.sh sync-blue.sh
+ln -s ../server/fetch-blue.sh fetch-blue.sh
+git add sync-blue.sh fetch-blue.sh
+```
+
+Always invoke a helper through the project-local link, for example
+`./sync-blue.sh`. The scripts intentionally derive `PROJECT_ROOT` from the path
+used to invoke them, so running `/path/to/vault/server/sync-blue.sh` directly
+would operate on the `server` repository instead. Git records the relative
+links while the helper implementation remains canonical in `server/`; a helper
+fix therefore does not need to be copied into every controlled project.
+
+The links may be unresolved in a remote project checkout that does not also
+contain a sibling `server/` checkout. This is acceptable because transport is
+initiated from the local controlled vault, not from blue. Runtime launchers
+needed on blue must remain real project files rather than links to `server/`.
+
+The project-local helper links read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from
 `.env.blue` in that project root or from the current shell. Keep `.env.blue`
 local and ignored; never commit it. Optional `BLUE_GIT_DIR` selects the remote
 bare repository.
@@ -136,12 +152,12 @@ Conda or pip settings:
 
 ## Git synchronization
 
-Run the project's copied `./sync-blue.sh` after committing local source
+Run the project's linked `./sync-blue.sh` after committing local source
 changes. It pushes the current branch to a bare Git repository on blue and
 fast-forwards the blue working copy. It refuses to overwrite a remote
 directory that is not already a Git working copy.
 
-Run the project's copied `./fetch-blue.sh` to copy the remote project's
+Run the project's linked `./fetch-blue.sh` to copy the remote project's
 `results/` into a timestamped local snapshot. Set `BLUE_RESULTS_PATH` when the
 project uses another relative results directory. Set `BLUE_LOG_PATTERN` (for
 example, `statelm-*`) to fetch matching files from `~/logs`; logs are skipped
