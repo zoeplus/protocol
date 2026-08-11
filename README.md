@@ -55,6 +55,12 @@ downloaded artifacts, logs, or generated results.
 
 ## Experiment results
 
+See [`QUANTITATIVE_ANALYSIS.md`](QUANTITATIVE_ANALYSIS.md) for the
+cross-project recording contract, integration boundary, and analysis pipeline.
+[`result_recorder.py`](result_recorder.py) is a reference implementation to
+copy and adapt inside the project that owns an experiment; it is not a
+drop-in recorder for every agent or evaluation framework.
+
 Keep every generated experiment artifact inside the project that produced it,
 under its project-local `results/` directory. Never create an ad hoc result
 root elsewhere in `$HOME`, such as `~/statelm-evaluation`.
@@ -84,7 +90,7 @@ Use stable filesystem-safe lowercase names.
 
 `report.json` is the machine-readable aggregate for the complete experiment.
 It records the effective configuration, dataset coverage, completion and
-failure counts, aggregate scores, and aggregate resource metrics. Each sample
+failure counts, aggregate scores, and aggregate behavioral metrics. Each sample
 gets one directory under `samples/`. Keep the completed interaction trace in
 `final_trajectory.json`. Each `trajectory_<num>.json` is one complete LLM-call
 transition, using zero-based, monotonically increasing numbers. It must record
