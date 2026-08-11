@@ -167,15 +167,28 @@ changes. It pushes the current branch to a bare Git repository on blue and
 fast-forwards the blue working copy. It refuses to overwrite a remote
 directory that is not already a Git working copy.
 
-Run the project's linked `./fetch-blue.sh` to copy the remote project's
-`results/` into a timestamped local snapshot. Set `BLUE_RESULTS_PATH` when the
-project uses another relative results directory. Set `BLUE_RESULTS_DEST` to an
-explicit local directory when the remote and local project-relative paths must
-remain identical. Set `BLUE_FETCH_DELETE=1` only when that local directory must
-exactly mirror the remote directory; this removes local entries that no longer
-exist remotely, but never deletes remote files. Set `BLUE_LOG_PATTERN` (for
-example, `statelm-*`) to fetch matching files from `~/logs`; logs are skipped
-when it is unset. This is always a one-way fetch from blue to the local machine.
+Run the project's linked `./fetch-blue.sh` with an explicit project-relative
+remote path. There is deliberately no default result source, and a
+`BLUE_RESULTS_PATH` stored in `.env.blue` is ignored. This prevents a stale
+project path from silently fetching an unrelated result tree. Prefer CLI
+arguments so separate non-exported shell assignments cannot be mistaken for
+script configuration:
+
+```bash
+./fetch-blue.sh \
+  --remote-path agentic_reasoning/results-inference/searchqa-eval-phase1 \
+  --dest "$PWD/agentic_reasoning/results-inference/searchqa-eval-phase1" \
+  --delete
+```
+
+`--dest` keeps remote and local project-relative paths identical. `--delete`
+removes local entries that no longer exist remotely, but never deletes remote
+files. `--log-pattern 'statelm-*'` additionally fetches matching files from
+`~/logs`; logs are skipped when it is unset. The exported environment variables
+`BLUE_RESULTS_PATH`, `BLUE_RESULTS_DEST`, `BLUE_FETCH_DELETE`, and
+`BLUE_LOG_PATTERN` remain supported, but ordinary unexported assignments made
+on earlier command lines are not visible to a child script. This is always a
+one-way fetch from blue to the local machine.
 
 Do not use rsync in both directions for source code. Use Git for source and
 `fetch-blue.sh` for results/logs.
