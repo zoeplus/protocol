@@ -14,6 +14,13 @@ scope. When the operator asks for commands or links, provide them immediately
 and stop unless execution was explicitly requested. After one network timeout,
 report it and use an alternative instead of repeatedly probing.
 
+Reuse existing scripts before adding new ones. If two jobs differ only by
+model paths, names, limits, prompts, endpoints, devices, or other configuration,
+expose those differences through environment variables and use one shared
+launcher. Add a separate script only when the execution flow, lifecycle, or
+required validation materially differs. Do not copy a launcher merely to
+provide different defaults; duplicated scripts increase drift and error risk.
+
 Do not repeatedly assemble nested local-shell, SSH, command-substitution, and
 `awk` quoting for routine checks. Put a repeatable check in the responsible
 helper script and validate that script locally with `bash -n` and `shellcheck`
