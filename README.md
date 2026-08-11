@@ -128,6 +128,11 @@ prompt size observed during the trajectory.
 
 ## Environment configuration integrity
 
+See [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md) for the cross-project
+index of reusable agent environments and their owning setup, service, and
+verification hooks. The index points to project-owned implementations; it does
+not duplicate those environments inside `server/`.
+
 Treat every project environment as a reproducible experiment artifact. A new
 container should be configurable from committed project documentation and
 configuration files without rediscovering package versions, installation
