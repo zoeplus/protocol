@@ -132,6 +132,25 @@ rsync \
   "$BLUE_HOST:$BLUE_DIR/$BLUE_RESULTS_PATH/" \
   "$BLUE_RESULTS_DEST/"
 
+echo "Verifying fetched tree with an rsync checksum dry run"
+VERIFY_DIFF="$(
+  rsync \
+    --archive \
+    --checksum \
+    --delete \
+    --dry-run \
+    --itemize-changes \
+    --rsh="$RSYNC_RSH" \
+    "$BLUE_HOST:$BLUE_DIR/$BLUE_RESULTS_PATH/" \
+    "$BLUE_RESULTS_DEST/"
+)"
+if [[ -n "$VERIFY_DIFF" ]]; then
+  echo "Error: local result tree differs from the remote after fetch:" >&2
+  printf '%s\n' "$VERIFY_DIFF" >&2
+  exit 1
+fi
+echo "Verification complete: local and remote result trees match"
+
 if [[ -n "$BLUE_LOG_PATTERN" ]]; then
   mkdir -p "$FETCH_DEST/logs"
   echo "Fetching matching logs from $BLUE_HOST:~/logs ($BLUE_LOG_PATTERN)"

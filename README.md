@@ -14,6 +14,13 @@ scope. When the operator asks for commands or links, provide them immediately
 and stop unless execution was explicitly requested. After one network timeout,
 report it and use an alternative instead of repeatedly probing.
 
+Do not repeatedly assemble nested local-shell, SSH, command-substitution, and
+`awk` quoting for routine checks. Put a repeatable check in the responsible
+helper script and validate that script locally with `bash -n` and `shellcheck`
+before using it remotely. When a one-off remote check is unavoidable, prefer a
+plain SSH command or separate local and remote commands over multiple quoting
+layers.
+
 For operator-run downloads on a reliable local machine, provide the direct
 links and commands by default. Do not write a download script unless the
 download needs substantial retry or recovery logic, or covers enough files
@@ -189,6 +196,11 @@ files. `--log-pattern 'statelm-*'` additionally fetches matching files from
 `BLUE_LOG_PATTERN` remain supported, but ordinary unexported assignments made
 on earlier command lines are not visible to a child script. This is always a
 one-way fetch from blue to the local machine.
+
+After transferring results, `fetch-blue.sh` always performs a checksum-based
+`rsync --dry-run --delete` comparison. It exits with an error and prints the
+differences if the local destination is not an exact mirror of the remote
+result tree. Do not repeat the comparison with an ad hoc SSH checksum command.
 
 Do not use rsync in both directions for source code. Use Git for source and
 `fetch-blue.sh` for results/logs.
