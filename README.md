@@ -1,6 +1,6 @@
-# RAOM server operations
+# Server Principles
 
-This directory is the canonical, machine-independent home for the blue-server
+This directory is the canonical, machine-independent home for the server (typically named blue)
 transport helper templates. Future agents should inspect this file and the two
 scripts before touching the remote.
 
@@ -35,7 +35,7 @@ that a script materially improves correctness and repeatability.
 
 Do not use `sudo` directly. The operator has sudo access even when the agent
 does not. Report a missing required system command to the operator; do not
-invent an environment-level substitute.
+invent an environment-level substitute that complicate the later operations.
 
 Keep project documentation operational and concise. Record stable requirements,
 current configuration, and verified commands only. Do not add dated inventory,
@@ -52,6 +52,59 @@ changes into one commit. Start the next stage only when the current state is
 understood and recoverable. Synchronize only committed revisions, and verify
 that local and remote resolve to the intended commit. Never commit secrets,
 downloaded artifacts, logs, or generated results.
+
+## Experiment results
+
+Keep every generated experiment artifact inside the project that produced it,
+under its project-local `results/` directory. Never create an ad hoc result
+root elsewhere in `$HOME`, such as `~/statelm-evaluation`.
+
+Use this structure:
+
+```text
+results/
+└── <benchmark>/
+    └── <method>--<model>/
+        ├── report.json
+        └── samples/
+            └── <sample-id>/
+                ├── final_trajectory.json
+                ├── trajectory_0.json
+                ├── trajectory_1.json
+                ├── ...
+                └── result.json
+```
+
+The first level is the benchmark. The second level is the experiment ID: the
+method and model joined as `<method>--<model>`, for example
+`statelm--qwen3-8b`. Add a short configuration suffix only when it distinguishes
+a real experimental condition, such as `statelm--qwen3-8b--context128k`; do not
+add generic `evaluation`, `experiment`, `run`, or timestamp prefixes or suffixes.
+Use stable filesystem-safe lowercase names.
+
+`report.json` is the machine-readable aggregate for the complete experiment.
+It records the effective configuration, dataset coverage, completion and
+failure counts, aggregate scores, and aggregate resource metrics. Each sample
+gets one directory under `samples/`. Keep the completed interaction trace in
+`final_trajectory.json`; save intermediate snapshots as `trajectory_<num>.json`
+using zero-based, monotonically increasing numbers. Keep the sample's final
+answer, status, score, and per-sample metrics in `result.json`. Supporting
+artifacts that belong only to that sample may be stored in the same sample
+directory. Do not mix per-sample files, aggregate reports, and unrelated runs
+in one directory.
+
+Operational stdout/stderr logs remain under `$HOME/logs`; models, datasets, and
+download caches may remain in their dedicated external locations. These are
+not experiment results. Generated results normally remain untracked by Git,
+but their project-relative layout must be stable so `fetch-blue.sh` can mirror
+them to the same location in the controlled vault.
+
+Record experiment metrics in `report.json` and each sample's `result.json`, not
+only in terminal or service logs. Agent experiments must include API-call and
+round counts, tool-call counts, failure state, effective configuration, and
+token usage where the backend provides it. Token metrics should include
+per-call and aggregate prompt, completion, and total tokens, plus the maximum
+prompt size observed during the trajectory.
 
 ## Environment configuration integrity
 
