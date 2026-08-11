@@ -86,12 +86,26 @@ Use stable filesystem-safe lowercase names.
 It records the effective configuration, dataset coverage, completion and
 failure counts, aggregate scores, and aggregate resource metrics. Each sample
 gets one directory under `samples/`. Keep the completed interaction trace in
-`final_trajectory.json`; save intermediate snapshots as `trajectory_<num>.json`
-using zero-based, monotonically increasing numbers. Keep the sample's final
-answer, status, score, and per-sample metrics in `result.json`. Supporting
-artifacts that belong only to that sample may be stored in the same sample
-directory. Do not mix per-sample files, aggregate reports, and unrelated runs
-in one directory.
+`final_trajectory.json`. Each `trajectory_<num>.json` is one complete LLM-call
+transition, using zero-based, monotonically increasing numbers. It must record
+the exact request context before the call, the model response, the tool action
+and full observation when present, context-management state before and after
+the action, and the exact resulting context. The resulting context of one
+completed transition must match the initial context of the next call. This is
+especially important for context-management actions: the record must make
+deletion, note, retrieval, and other prompt changes directly inspectable rather
+than reducing the trajectory to an isolated action-observation pair.
+
+Write the initial request before invoking the model, then complete the same
+snapshot atomically after the response and action. This preserves the input of
+a failed or interrupted call. Keep the sample's final answer, status, score,
+and per-sample metrics in `result.json`. When retrying a failed or interrupted
+sample, move its prior primary artifacts under
+`samples/<sample-id>/attempts/attempt_<num>/` and start a clean primary
+trajectory; never concatenate separate agent sessions or discard the failed
+attempt. Supporting artifacts that belong only to that sample may be stored in
+the same sample directory. Do not mix per-sample files, aggregate reports, and
+unrelated runs in one directory.
 
 Operational stdout/stderr logs remain under `$HOME/logs`; models, datasets, and
 download caches may remain in their dedicated external locations. These are
