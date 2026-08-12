@@ -25,6 +25,37 @@ with a committed project-local launcher instead of an ad hoc command. The
 launcher is part of the reproducible experiment configuration and must expose
 machine- or run-specific values through environment variables.
 
+### Launcher filename protocol
+
+Classify a script before naming it. Public entrypoints and internal delegation
+layers use different prefixes so an operator can identify runnable experiment
+conditions from a directory listing.
+
+| Script role | Filename form | Example |
+|---|---|---|
+| Model service entrypoint | `serve_<model>.sh` | `serve_qwen3_8b.sh` |
+| Public experiment entrypoint | `run_<benchmark>__<method>__<model>.sh` | `run_infinitebench__basic_tools__qwen3_8b.sh` |
+| Internal shared implementation or benchmark adapter | `im_<purpose>.sh` | `im_infinitebench_evaluation.sh` |
+
+Double underscores separate the benchmark, method, and model fields in public
+experiment launchers. Single underscores remain part of one field, such as
+`longmemeval_s`, `basic_tools`, or `qwen3_8b`. Keep every field explicit even
+when values repeat: use `run_infinitebench__statelm__statelm_8b.sh`, not an
+abbreviated name that hides whether `statelm` identifies the method or model.
+Put a stable benchmark variant in the benchmark field when needed, for example
+`run_niah_128k__statelm__statelm_8b.sh`.
+
+An `im_` script is not an operator-facing experiment command. Public `run_`
+wrappers set the condition-specific defaults and delegate to the relevant
+`im_` implementation. Internal layers must not retain a `run_` name merely
+because they can technically be invoked directly. Setup, download, inspection,
+and synchronization utilities may retain their established functional verbs;
+do not force them into this experiment-launcher routine.
+
+Before committing a launcher change, list the scripts and verify that every
+public condition has exactly one unambiguous `run_` entrypoint, every delegated
+target exists, and no internal layer is presented as a public condition.
+
 ### Variable protocol
 
 Use one meaning per variable name across launchers. Declare variables near the

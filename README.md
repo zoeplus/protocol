@@ -19,6 +19,10 @@ Read only the relevant focused documents unless a task crosses their
 boundaries. The operating-efficiency and progress-control rules below apply to
 all work.
 
+Before creating or renaming any launcher, check the filename routine in
+[`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md). A public experiment entrypoint
+and an internal implementation layer must not use the same naming form.
+
 ## Operating efficiency
 
 Prefer the shortest path to the requested deliverable. Do not perform
