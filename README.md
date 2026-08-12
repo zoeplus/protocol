@@ -314,6 +314,86 @@ with a committed project-local launcher instead of an ad hoc command. The
 launcher is part of the reproducible experiment configuration and must expose
 machine- or run-specific values through environment variables.
 
+### Variable protocol
+
+Use one meaning per variable name across launchers. Declare variables near the
+top of the script in this order: derived script paths, executable environment,
+input/model configuration, experiment configuration, runtime resources, and
+job lifecycle. Do not use several aliases for the same value in one script.
+
+| Variable | Meaning | Rule |
+|---|---|---|
+| `SCRIPT_DIR` | Absolute directory containing the invoked script | Derive from `BASH_SOURCE[0]`; never accept it from the environment or export it. |
+| `SCRIPT_PATH` | Absolute path of the invoked script when it reinvokes a worker mode | Derive from `SCRIPT_DIR`; omit it when the script does not reinvoke itself. |
+| `PROJECT_ROOT` | Root of the project that owns the launcher | Derive from `SCRIPT_DIR`; use this name instead of mixing `REPO_ROOT`, `PROJECT_DIR`, and similar aliases. |
+| `CONDA_BIN` | Conda executable path | Operator-configurable; default to the verified installation path. |
+| `CONDA_ENV_NAME` | Conda environment used to execute the job | Operator-configurable. New scripts must not use the ambiguous `ENV_NAME`. |
+| `MODEL_PATH` | Local checkpoint or model directory passed to the serving/runtime command | This is a filesystem path, never a model label. |
+| `SERVED_MODEL_NAME` | Model name exposed by an inference endpoint and used in API requests | Keep it aligned with the endpoint configuration. Do not call it `MODEL_NAME`. |
+| `BENCHMARK_ID` | Stable filesystem-safe benchmark identity | Used as the first project-local result level. |
+| `METHOD_ID` | Stable filesystem-safe agent or evaluation-method identity | Describes the method independently of the checkpoint. |
+| `MODEL_ID` | Stable filesystem-safe checkpoint/model identity | Describes the model independently of its API alias. |
+| `EXPERIMENT_ID` | Stable project-local result identity, normally `<method>--<model>[--<condition>]` | Determines the result directory; it must not contain a timestamp or change merely to preserve logs. |
+| `JOB_NAME` | One process/service invocation identity | Determines operational log and PID filenames; it may distinguish smoke, collection, or service jobs without changing `EXPERIMENT_ID`. |
+| `LOG_DIR` | Directory for operational logs | Default to `${BLUE_LOG_DIR:-$HOME/logs}` on blue. `BLUE_LOG_DIR` is the optional host-level override; launcher logic uses `LOG_DIR` afterward. |
+| `LOG_FILE` | Log path for this invocation | Always derive as `$LOG_DIR/$JOB_NAME.log`; do not accept an independent override. |
+| `PID_FILE` | PID/PGID path for this invocation | Always derive as `$LOG_FILE.pid`; do not accept an independent override. |
+
+`EXPERIMENT_ID`, `JOB_NAME`, and `CONDA_ENV_NAME` identify different things and
+must never be substituted for one another. Do not introduce a generic
+`ENVIRONMENT_ID`: dependency/runtime environments use `CONDA_ENV_NAME`, while
+an agent-environment catalog entry is documentation metadata rather than a
+launcher variable. Prefer descriptive names such as `DATASET_PATH`,
+`TOKENIZER_PATH`, `TOOL_CONFIG_PATH`, `RESULTS_ROOT`, `GPU_IDS`, and `PORT` over
+generic `PATH`, `CONFIG`, `OUTPUT`, `DEVICE`, or `NAME`.
+
+Suffixes carry consistent semantics: `_PATH` is one filesystem entry, `_DIR`
+is a directory, `_FILE` is a specific file, `_ID` is a stable machine-facing
+identity, and `_NAME` is a runtime/display name accepted by another system.
+Use `_ROOT` only for the root of a structured tree. Do not store a path in an
+`_ID` or `_NAME` variable, and do not use a display name as a result-directory
+identity.
+
+Component-specific settings must carry a stable prefix when their unqualified
+meaning could collide, for example `ES_HOST`, `ES_PORT`, `SERVER_MAX_MODEL_LEN`,
+or `VLLM_GPU_MEMORY_UTILIZATION`. A generic name is acceptable only when the
+launcher has exactly one unambiguous instance of that concept. Shell-local
+implementation variables use lowercase and `local`; uppercase is reserved for
+configuration and derived launcher constants.
+
+Wrapper launchers may set only the small set of defaults that differ, export
+them, and then `exec` the shared launcher. Use the caller-preserving form
+`export NAME="${NAME:-default}"`. Do not export `SCRIPT_DIR`, `SCRIPT_PATH`,
+`PROJECT_ROOT`, `LOG_FILE`, or `PID_FILE`, and do not recompute lifecycle paths
+in the wrapper. The shared launcher owns validation, worker mode, logging, PID
+handling, and execution. When accepting a legacy variable such as `ENV_NAME`
+during migration, translate it once at the boundary, document the alias, and
+use only the canonical name internally.
+
+A canonical declaration block is:
+
+```bash
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="$SCRIPT_DIR/$(basename -- "${BASH_SOURCE[0]}")"
+PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+
+CONDA_BIN="${CONDA_BIN:-/opt/conda/bin/conda}"
+CONDA_ENV_NAME="${CONDA_ENV_NAME:-project-env}"
+MODEL_PATH="${MODEL_PATH:-$HOME/models/model-name}"
+SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-model-name}"
+BENCHMARK_ID="${BENCHMARK_ID:-benchmark-name}"
+METHOD_ID="${METHOD_ID:-method-name}"
+MODEL_ID="${MODEL_ID:-model-name}"
+EXPERIMENT_ID="${EXPERIMENT_ID:-method--model-name}"
+
+GPU_IDS="${GPU_IDS:-0}"
+PORT="${PORT:-8080}"
+LOG_DIR="${BLUE_LOG_DIR:-$HOME/logs}"
+JOB_NAME="${JOB_NAME:-method-model-name-collect}"
+LOG_FILE="$LOG_DIR/$JOB_NAME.log"
+PID_FILE="$LOG_FILE.pid"
+```
+
 Logs always go to `$HOME/logs` by default on blue. Do not put runtime logs in
 the project repository, and do not require the operator to set a log directory
 for the normal case. A project may provide a documented environment-variable
