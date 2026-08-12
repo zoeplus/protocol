@@ -31,7 +31,7 @@ fields in the project README and do not label reconstructed data as exact.
 
 ## Artifact contract
 
-Use the project-local layout defined in `README.md`:
+Use the project-local layout defined in "Experiment results" below:
 
 ```text
 results/<benchmark>/<method>--<model>/
@@ -151,3 +151,74 @@ Run a one-sample smoke test before a full collection. Verify that:
 Only after this gate passes should the project launcher start a full run. Keep
 the smoke artifact in the canonical experiment only when the full run uses the
 same configuration and can resume it without rewriting the sample.
+
+## Experiment results
+
+[`result_recorder.py`](result_recorder.py) is a reference implementation to
+copy and adapt inside the project that owns an experiment; it is not a
+drop-in recorder for every agent or evaluation framework.
+
+Keep every generated experiment artifact inside the project that produced it,
+under its project-local `results/` directory. Never create an ad hoc result
+root elsewhere in `$HOME`, such as `~/statelm-evaluation`.
+
+Use this structure:
+
+```text
+results/
+└── <benchmark>/
+    └── <method>--<model>/
+        ├── report.json
+        └── samples/
+            └── <sample-id>/
+                ├── final_trajectory.json
+                ├── trajectory_0.json
+                ├── trajectory_1.json
+                ├── ...
+                └── result.json
+```
+
+The first level is the benchmark. The second level is the experiment ID: the
+method and model joined as `<method>--<model>`, for example
+`statelm--qwen3-8b`. Add a short configuration suffix only when it distinguishes
+a real experimental condition, such as `statelm--qwen3-8b--context128k`; do not
+add generic `evaluation`, `experiment`, `run`, or timestamp prefixes or suffixes.
+Use stable filesystem-safe lowercase names.
+
+`report.json` is the machine-readable aggregate for the complete experiment.
+It records the effective configuration, dataset coverage, completion and
+failure counts, aggregate scores, and aggregate behavioral metrics. Each sample
+gets one directory under `samples/`. Keep the completed interaction trace in
+`final_trajectory.json`. Each `trajectory_<num>.json` is one complete LLM-call
+transition, using zero-based, monotonically increasing numbers. It must record
+the exact request context before the call, the model response, the tool action
+and full observation when present, context-management state before and after
+the action, and the exact resulting context. The resulting context of one
+completed transition must match the initial context of the next call. This is
+especially important for context-management actions: the record must make
+deletion, note, retrieval, and other prompt changes directly inspectable rather
+than reducing the trajectory to an isolated action-observation pair.
+
+Write the initial request before invoking the model, then complete the same
+snapshot atomically after the response and action. This preserves the input of
+a failed or interrupted call. Keep the sample's final answer, status, score,
+and per-sample metrics in `result.json`. When retrying a failed or interrupted
+sample, move its prior primary artifacts under
+`samples/<sample-id>/attempts/attempt_<num>/` and start a clean primary
+trajectory; never concatenate separate agent sessions or discard the failed
+attempt. Supporting artifacts that belong only to that sample may be stored in
+the same sample directory. Do not mix per-sample files, aggregate reports, and
+unrelated runs in one directory.
+
+Operational stdout/stderr logs remain under `$HOME/logs`; models, datasets, and
+download caches may remain in their dedicated external locations. These are
+not experiment results. Generated results normally remain untracked by Git,
+but their project-relative layout must be stable so `fetch-blue.sh` can mirror
+them to the same location in the controlled vault.
+
+Record experiment metrics in `report.json` and each sample's `result.json`, not
+only in terminal or service logs. Agent experiments must include API-call and
+round counts, tool-call counts, failure state, effective configuration, and
+token usage where the backend provides it. Token metrics should include
+per-call and aggregate prompt, completion, and total tokens, plus the maximum
+prompt size observed during the trajectory.
