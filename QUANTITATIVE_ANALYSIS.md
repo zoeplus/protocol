@@ -152,6 +152,37 @@ Only after this gate passes should the project launcher start a full run. Keep
 the smoke artifact in the canonical experiment only when the full run uses the
 same configuration and can resume it without rewriting the sample.
 
+## Derived analysis workflow
+
+Analyze each experiment independently before comparing runs. A project-local
+analyzer should accept one `results/<benchmark>/<experiment>/` folder and write
+normalized sample-, action-, and aggregate-level derivatives without changing
+raw trajectories. Keep derived files in a stable `analysis/` subdirectory or
+an explicit output directory, and write them atomically so the command can be
+rerun after a partial collection resumes. Record the analysis timestamp and
+source artifact counts because a running experiment is only a snapshot.
+
+Always distinguish these denominators:
+
+- completion rate over the expected or discovered sample set;
+- accuracy among completed, scored samples;
+- end-to-end correct rate over the whole sample set, treating failures,
+  incomplete samples, and missing outcomes as not correct;
+- paired accuracy when comparing only sample IDs completed by both runs.
+
+Report sample counts and uncertainty intervals with rates. Do not silently use
+numeric scores attached to failed samples as completed-only accuracy. Reconcile
+derived token and call totals against `report.json`, check contiguous
+trajectory indices and adjacent-context equality, and classify failure modes
+before interpreting model quality.
+
+Before a cross-run comparison, verify dataset and split, sample identity,
+checkpoint, system prompt, tool configuration, agent version, context and
+output limits, sampling parameters, and stopping rules. A mismatch in any of
+these is a different experimental condition. Describe tool/score correlations
+as associations rather than causal effects; sample difficulty can influence
+both tool use and outcome.
+
 ## Experiment results
 
 [`result_recorder.py`](result_recorder.py) is a reference implementation to
