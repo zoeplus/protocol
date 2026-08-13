@@ -19,6 +19,12 @@ Read only the relevant focused documents unless a task crosses their
 boundaries. The operating-efficiency and progress-control rules below apply to
 all work.
 
+Reusable reference implementations live beside their governing document:
+`result_recorder.py` covers capture, and
+[`quantitative_analysis/`](quantitative_analysis/README.md) covers deterministic
+derived analysis. Both must be copied and adapted into the owning project, not
+imported across repository boundaries.
+
 Before creating or renaming any launcher, check the filename routine in
 [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md). A public experiment entrypoint
 and an internal implementation layer must not use the same naming form.

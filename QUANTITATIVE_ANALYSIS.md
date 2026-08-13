@@ -1,10 +1,9 @@
 # Quantitative Analysis Foundation
 
-This document defines a common recording contract for experiments across the
-controlled projects. Its purpose is to make trajectories, outcomes, and usage
-comparable without moving result ownership out of the project that produced
-them. It covers data capture and normalization; benchmark-specific scoring and
-later statistical analysis remain project work.
+This document defines a common recording and deterministic-analysis contract
+for experiments across the controlled projects. Its purpose is to make
+trajectories, outcomes, usage, context management, and tool behavior comparable
+without moving result ownership out of the project that produced them.
 
 ## Scope and integration boundary
 
@@ -12,6 +11,13 @@ later statistical analysis remain project work.
 plugin. A project should copy or adapt it within its own source tree and commit
 that integration with the experiment launcher. Do not import it at runtime
 from the sibling `server` repository.
+
+[`quantitative_analysis/`](quantitative_analysis/README.md) is the corresponding
+copy-and-adapt reference for derived analysis. It follows the same boundary:
+copy the reusable modules, CLI adapters, and relevant tests into the project
+that owns the experiment. Do not add `server` to another project's runtime
+Python path. The reference deliberately excludes API-backed LLM judging; it
+covers deterministic analysis of recorded outcomes and trajectories.
 
 The recorder can provide atomic files, retry preservation, transition
 numbering, token aggregation, and the common result layout. It cannot infer:
@@ -162,6 +168,25 @@ an explicit output directory, and write them atomically so the command can be
 rerun after a partial collection resumes. Record the analysis timestamp and
 source artifact counts because a running experiment is only a snapshot.
 
+The reusable reference implementation separates the read-only analysis API
+from artifact writing. A standard run should generate, when source fields are
+available:
+
+- `summary.json` with source configuration, coverage, performance, failure,
+  distribution, reconciliation, integrity, context, and cache summaries;
+- `samples.csv` with one normalized row per discovered sample;
+- `tools.csv` with per-tool volume, success, and score-conditioned statistics;
+- `tool_calls.csv` with one row per action for later sequence analysis;
+- `context_evolution.csv` and `context_evolution.svg` with per-call prompt size
+  and tool-colored growth or reduction segments;
+- `cache_transitions.csv` with optional theoretical token-prefix retention;
+- `report.md` as a generated, human-readable view of the same snapshot.
+
+Do not hand-edit a generated `report.md` as the canonical result. Change the
+analyzer or add a separate derived analysis, then regenerate it. Preserve old
+analysis output before a schema or interpretation change when historical
+integrity matters.
+
 Always distinguish these denominators:
 
 - completion rate over the expected or discovered sample set;
@@ -182,6 +207,72 @@ output limits, sampling parameters, and stopping rules. A mismatch in any of
 these is a different experimental condition. Describe tool/score correlations
 as associations rather than causal effects; sample difficulty can influence
 both tool use and outcome.
+
+### Context and prefix-retention analysis
+
+Plot prompt tokens at every model call rather than only aggregate token usage.
+Color each segment by the action that transformed the starting call into the
+next context. This exposes monotonic context growth, deletion or compression,
+large retrieval insertions, and the position of failures. Keep the underlying
+call-level CSV so selection of representative trajectories does not hide the
+full population.
+
+When snapshots contain exact contexts, compute theoretical KV-prefix retention
+with the exact tokenizer and chat template used during generation. Tokenize the
+previous request plus its generated assistant action without a new generation
+prompt, tokenize the next exact request, and find their token longest common
+prefix. For every observed adjacent transition record:
+
+```text
+retention_t = common_prefix_tokens_t / previous_tokens_t
+```
+
+Report both aggregations because they answer different questions:
+
+- mean per-transition retention gives every transition equal weight and
+  describes a typical context change;
+- token-weighted retained prefix divides total retained-prefix tokens by total
+  previous tokens and estimates the retained share of all eligible KV entries.
+
+Exclude terminal snapshots without an observed next model call and do not join
+across missing trajectory indices. Record reconstruction failures separately.
+Call the result theoretical prefix retention, not an observed cache hit rate:
+server block size, eviction, request routing, and cache policy remain unknown.
+
+### Tool-sequence analysis
+
+Run sequence analysis as a second stage from `tool_calls.csv`; do not reread
+large trajectories or repeat tokenizer-dependent cache calculations. For a
+target tool, group calls by sample and map exact trajectory indices before
+computing its immediate predecessor, two-tool predecessor pattern, immediate
+successor, spacing, and consecutive target-tool run lengths. Missing indices
+must remain explicit and samples must never be joined.
+
+Pie charts are useful for the one- and two-step categorical predecessor
+distributions, but retain counts and denominators in `summary.json` and event
+rows in CSV. Also report the number and proportion of samples using the tool,
+calls per using sample, multi-call run prevalence, and run boundary tools.
+These cheaply derived metrics often distinguish an isolated action from a
+learned multi-action protocol.
+
+### Reuse procedure
+
+Copy the reference rather than reciting or reimplementing it:
+
+```bash
+cp -a "$PROJS/RAOM/server/quantitative_analysis/src/." PROJECT/src/
+cp "$PROJS/RAOM/server/quantitative_analysis/scripts/analyze_experiment.py" \
+  PROJECT/scripts/
+cp "$PROJS/RAOM/server/quantitative_analysis/scripts/analyze_tool_neighborhoods.py" \
+  PROJECT/scripts/
+```
+
+Copy the focused tests as well when integrating into a new project. Adapt only
+the project-facing layer for terminal tool names, answer formats, tokenizer
+loading, and deliberate color overrides. Keep benchmark and model names out of
+the reusable source. The complete interface, outputs, interpretation rules,
+and dependency-free verification command are documented in the toolkit
+[`README.md`](quantitative_analysis/README.md).
 
 ## Experiment results
 
