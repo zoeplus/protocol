@@ -2,28 +2,27 @@
 
 ## Required environment
 
-Keep `server/` and each controlled project as sibling directories under the
-same parent vault. Track project-local relative symbolic links to the canonical
+Keep `$PROT` and each controlled project as separate projects. Track project-local relative symbolic links to the canonical
 helpers instead of copying their implementations:
 
 ```bash
 cd /path/to/vault/project
-ln -s ../server/sync-blue.sh sync-blue.sh
-ln -s ../server/fetch-blue.sh fetch-blue.sh
+ln -s $PROT/sync-blue.sh sync-blue.sh
+ln -s $PROT/fetch-blue.sh fetch-blue.sh
 git add sync-blue.sh fetch-blue.sh
 ```
 
 Always invoke a helper through the project-local link, for example
 `./sync-blue.sh`. The scripts intentionally derive `PROJECT_ROOT` from the path
-used to invoke them, so running `/path/to/vault/server/sync-blue.sh` directly
-would operate on the `server` repository instead. Git records the relative
-links while the helper implementation remains canonical in `server/`; a helper
+used to invoke them, so running `$PROT/sync-blue.sh` directly
+would operate on the `$PROT` repository instead. Git records the relative
+links while the helper implementation remains canonical in `$PROT`; a helper
 fix therefore does not need to be copied into every controlled project.
 
 The links may be unresolved in a remote project checkout that does not also
-contain a sibling `server/` checkout. This is acceptable because transport is
+contain a sibling `$PROT` checkout. This is acceptable because transport is
 initiated from the local controlled vault, not from blue. Runtime launchers
-needed on blue must remain real project files rather than links to `server/`.
+needed on blue must remain real project files rather than links to `$PROT`.
 
 The project-local helper links read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from
 `.env.blue` in that project root or from the current shell. Keep `.env.blue`

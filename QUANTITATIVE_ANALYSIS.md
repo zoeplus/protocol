@@ -10,12 +10,12 @@ without moving result ownership out of the project that produced them.
 `result_recorder.py` is a reference implementation, not a universal tracing
 plugin. A project should copy or adapt it within its own source tree and commit
 that integration with the experiment launcher. Do not import it at runtime
-from the sibling `server` repository.
+from the `$PROT` repository.
 
 [`quantitative_analysis/`](quantitative_analysis/README.md) is the corresponding
 copy-and-adapt reference for derived analysis. It follows the same boundary:
 copy the reusable modules, CLI adapters, and relevant tests into the project
-that owns the experiment. Do not add `server` to another project's runtime
+that owns the experiment. Do not add `$PROT` to another project's runtime
 Python path. The reference deliberately excludes API-backed LLM judging; it
 covers deterministic analysis of recorded outcomes and trajectories.
 
@@ -260,10 +260,10 @@ learned multi-action protocol.
 Copy the reference rather than reciting or reimplementing it:
 
 ```bash
-cp -a "$PROJS/RAOM/server/quantitative_analysis/src/." PROJECT/src/
-cp "$PROJS/RAOM/server/quantitative_analysis/scripts/analyze_experiment.py" \
+cp -a "$PROJS/protocol/quantitative_analysis/src/." PROJECT/src/
+cp "$PROJS/protocol/quantitative_analysis/scripts/analyze_experiment.py" \
   PROJECT/scripts/
-cp "$PROJS/RAOM/server/quantitative_analysis/scripts/analyze_tool_neighborhoods.py" \
+cp "$PROJS/protocol/quantitative_analysis/scripts/analyze_tool_neighborhoods.py" \
   PROJECT/scripts/
 ```
 

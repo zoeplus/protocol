@@ -21,7 +21,7 @@ mapping, tool interface, result recording, and evaluation runner.
 
 ## Authoritative hooks
 
-Resolve these paths from the controlled vault root where `server/` and
+Resolve these paths from the controlled vault root where `$PROT` and
 `StateLM/` are sibling repositories:
 
 | Concern | Hook |
