@@ -1,19 +1,19 @@
 # Server Principles
 
-This directory is the canonical, machine-independent home for the server
-(typically named blue) transport helper templates. Future agents should inspect
-this file before touching the remote, then read the document relevant to the
-task.
+This directory `$PROT` is the canonical, machine-independent home for the server
+(typically named blue) transport helper templates, as well as the quantitative analysis 
+framework. Future agents should inspect this file before touching the remote, then read
+the document relevant to the task.
 
 ## Documentation map
 
-| Task | Required document |
-|---|---|
-| Source synchronization, result transfer, or vault layout | [`PROJECT_SYNC.md`](PROJECT_SYNC.md) |
-| Long-running services, evaluations, process control, or launcher variables | [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md) |
-| Package mirrors, downloads, or large installations | [`DOWNLOADS.md`](DOWNLOADS.md) |
-| Agent environment setup or reuse | [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md) |
-| Experiment results, trajectories, metrics, or analysis | [`QUANTITATIVE_ANALYSIS.md`](QUANTITATIVE_ANALYSIS.md) |
+| Task                                                                       | Required document                                      |
+| -------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Source synchronization, result transfer, or vault layout                   | [`PROJECT_SYNC.md`](PROJECT_SYNC.md)                   |
+| Long-running services, evaluations, process control, or launcher variables | [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md)         |
+| Package mirrors, downloads, or large installations                         | [`DOWNLOADS.md`](DOWNLOADS.md)                         |
+| Agent environment setup or reuse                                           | [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md)       |
+| Experiment results, trajectories, metrics, or analysis                     | [`QUANTITATIVE_ANALYSIS.md`](QUANTITATIVE_ANALYSIS.md) |
 
 Read only the relevant focused documents unless a task crosses their
 boundaries. The operating-efficiency and progress-control rules below apply to
@@ -26,8 +26,7 @@ derived analysis. Both must be copied and adapted into the owning project, not
 imported across repository boundaries.
 
 Before creating or renaming any launcher, check the filename routine in
-[`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md). A public experiment entrypoint
-and an internal implementation layer must not use the same naming form.
+[`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md). 
 
 ## Operating efficiency
 
@@ -70,7 +69,7 @@ its intended environment before documenting it as working.
 
 ## Progress control
 
-Keep both this `server` repository and the active controlled vault under
+Keep both this `$PROT` repository and the active controlled vault under
 stage-by-stage Git control. Check `git status` before starting work, make a
 scoped commit after each verified stage, and do not accumulate unrelated
 changes into one commit. Start the next stage only when the current state is
