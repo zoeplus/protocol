@@ -332,10 +332,8 @@ attempt. Supporting artifacts that belong only to that sample may be stored in
 the same sample directory. Do not mix per-sample files, aggregate reports, and
 unrelated runs in one directory.
 
-Operational stdout/stderr logs remain under `$HOME/logs`; models, datasets, and
-download caches may remain in their dedicated external locations. These are
-not experiment results. Generated results normally remain untracked by Git,
-but their project-relative layout must be stable so `fetch-blue.sh` can mirror
+Operational stdout/stderr logs remain under `$HOME/logs`; Generated results normally remain untracked by Git,
+but their project-relative layout must be stable so `fetch.sh` can mirror
 them to the same location in the controlled vault.
 
 Record experiment metrics in `report.json` and each sample's `result.json`, not

@@ -7,55 +7,55 @@ helpers instead of copying their implementations:
 
 ```bash
 cd /path/to/vault/project
-ln -s $PROT/sync-blue.sh sync-blue.sh
-ln -s $PROT/fetch-blue.sh fetch-blue.sh
-git add sync-blue.sh fetch-blue.sh
+ln -s $PROT/sync.sh sync.sh
+ln -s $PROT/fetch.sh fetch.sh
+git add sync.sh fetch.sh
 ```
 
 Always invoke a helper through the project-local link, for example
-`./sync-blue.sh`. The scripts intentionally derive `PROJECT_ROOT` from the path
-used to invoke them, so running `$PROT/sync-blue.sh` directly
+`./sync.sh`. The scripts intentionally derive `PROJECT_ROOT` from the path
+used to invoke them, so running `$PROT/sync.sh` directly
 would operate on the `$PROT` repository instead. Git records the relative
 links while the helper implementation remains canonical in `$PROT`; a helper
 fix therefore does not need to be copied into every controlled project.
 
 The links may be unresolved in a remote project checkout that does not also
-contain a sibling `$PROT` checkout. This is acceptable because transport is
-initiated from the local controlled vault, not from blue. Runtime launchers
-needed on blue must remain real project files rather than links to `$PROT`.
+contain a `$PROT` checkout. This is acceptable because transport is
+initiated from the local controlled vault, not from the server. Runtime launchers
+needed on the server must remain real project files rather than links to `$PROT`.
 
-The project-local helper links read `BLUE_HOST`, `BLUE_PORT`, and `BLUE_DIR` from
-`.env.blue` in that project root or from the current shell. Keep `.env.blue`
-local and ignored; never commit it. Optional `BLUE_GIT_DIR` selects the remote
-bare repository.
+The project-local helper links read `HOST`, `PORT`, and `DIR` from
+`.env` in that project root or from the current shell. Keep `.env`
+local and ignored; never commit it (yet you can inspect it, it's no secret file, actually). 
+Optional `GIT_DIR` selects the remote bare repository.
 
 Example, supplied by the operator from the controlled vault:
 
 ```bash
 set -a
-source /path/to/controlled-vault/.env.blue
+source /path/to/controlled-vault/.env
 set +a
 ```
 
 
-## Git synchronization
+## Synchronization
 
-Run the project's linked `./sync-blue.sh` after committing local source
-changes. It pushes the current branch to a bare Git repository on blue and
-fast-forwards the blue working copy. It refuses to overwrite a remote
+Run the project's linked `./sync.sh` after committing local source
+changes. It pushes the current branch to a bare Git repository on the server and
+fast-forwards the server working copy. It refuses to overwrite a remote
 directory that is not already a Git working copy.
 
-Run the project's linked `./fetch-blue.sh` with an explicit project-relative
+Run the project's linked `./fetch.sh` with an explicit project-relative
 remote path. There is deliberately no default result source, and a
-`BLUE_RESULTS_PATH` stored in `.env.blue` is ignored. This prevents a stale
+`RESULTS_PATH` stored in `.env` is ignored. This prevents a stale
 project path from silently fetching an unrelated result tree. Prefer CLI
 arguments so separate non-exported shell assignments cannot be mistaken for
 script configuration:
 
 ```bash
-./fetch-blue.sh \
-  --remote-path agentic_reasoning/results-inference/searchqa-eval-phase1 \
-  --dest "$PWD/agentic_reasoning/results-inference/searchqa-eval-phase1" \
+./fetch.sh \
+  --remote-path results/ \
+  --dest "$PWD/results" \
   --delete
 ```
 
@@ -63,15 +63,15 @@ script configuration:
 removes local entries that no longer exist remotely, but never deletes remote
 files. `--log-pattern 'statelm-*'` additionally fetches matching files from
 `~/logs`; logs are skipped when it is unset. The exported environment variables
-`BLUE_RESULTS_PATH`, `BLUE_RESULTS_DEST`, `BLUE_FETCH_DELETE`, and
-`BLUE_LOG_PATTERN` remain supported, but ordinary unexported assignments made
+`RESULTS_PATH`, `RESULTS_DEST`, `FETCH_DELETE`, and
+`LOG_PATTERN` remain supported, but ordinary unexported assignments made
 on earlier command lines are not visible to a child script. This is always a
-one-way fetch from blue to the local machine.
+one-way fetch from server to the local machine.
 
-After transferring results, `fetch-blue.sh` always performs a checksum-based
+After transferring results, `fetch.sh` always performs a checksum-based
 `rsync --dry-run --delete` comparison. It exits with an error and prints the
 differences if the local destination is not an exact mirror of the remote
 result tree. Do not repeat the comparison with an ad hoc SSH checksum command.
 
 Do not use rsync in both directions for source code. Use Git for source and
-`fetch-blue.sh` for results/logs.
+`fetch.sh` for results/logs.

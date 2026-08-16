@@ -57,7 +57,7 @@ agent-authored compatibility adjustment. The documentation must identify:
 
 Preserve upstream environment files when they are useful evidence. Do not
 silently overwrite the original configuration with a locally repaired one.
-Add a clearly named reproducible configuration such as `environment-blue.yml`,
+Add a clearly named reproducible configuration such as `environment-[project name].yml`,
 requirements or constraints files, or a lock file when it materially improves
 replayability, and explain its relationship to the upstream file in the
 README. The README remains the entry point: it must state which file to use,

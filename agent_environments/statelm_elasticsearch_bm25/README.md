@@ -21,22 +21,21 @@ mapping, tool interface, result recording, and evaluation runner.
 
 ## Authoritative hooks
 
-Resolve these paths from the controlled vault root where `$PROT` and
-`StateLM/` are sibling repositories:
+Resolve these paths from the controlled vault root. If not clear, as the operator for help.
 
-| Concern | Hook |
-|---|---|
-| Environment overview and verified versions | `StateLM/README.md`, Setup |
-| Python dependency pins | `StateLM/requirements_min.txt` |
-| Conda environment setup | `StateLM/scripts/setup_inference_env.sh` |
-| Offline wheelhouse preparation | `StateLM/scripts/download_inference_wheelhouse.sh` |
-| Elasticsearch procedure | `StateLM/elasticsearch_setup.md` |
-| Elasticsearch archive preparation | `StateLM/scripts/download_elasticsearch_archive.sh` |
-| Elasticsearch installation | `StateLM/scripts/setup_elasticsearch.sh` |
-| Elasticsearch lifecycle | `StateLM/scripts/elasticsearch_service.sh` |
-| Elasticsearch runtime configuration | `StateLM/config/elasticsearch/` |
-| StateLM tool definitions | `StateLM/tools_and_prompt/statelm_tools.json` |
-| Example evaluation launcher | `StateLM/scripts/run_vllm_infbench_statelm_8b.sh` |
+| Concern                                    | Hook                                                |
+| ------------------------------------------ | --------------------------------------------------- |
+| Environment overview and verified versions | `StateLM/README.md`, Setup                          |
+| Python dependency pins                     | `StateLM/requirements_min.txt`                      |
+| Conda environment setup                    | `StateLM/scripts/setup_inference_env.sh`            |
+| Offline wheelhouse preparation             | `StateLM/scripts/download_inference_wheelhouse.sh`  |
+| Elasticsearch procedure                    | `StateLM/elasticsearch_setup.md`                    |
+| Elasticsearch archive preparation          | `StateLM/scripts/download_elasticsearch_archive.sh` |
+| Elasticsearch installation                 | `StateLM/scripts/setup_elasticsearch.sh`            |
+| Elasticsearch lifecycle                    | `StateLM/scripts/elasticsearch_service.sh`          |
+| Elasticsearch runtime configuration        | `StateLM/config/elasticsearch/`                     |
+| StateLM tool definitions                   | `StateLM/tools_and_prompt/statelm_tools.json`       |
+| Example evaluation launcher                | `StateLM/scripts/run_vllm_infbench_statelm_8b.sh`   |
 
 Inspect the owning project's README and Elasticsearch guide before executing a
 hook. Do not reconstruct their commands from this guide when the committed
@@ -46,18 +45,18 @@ scripts already encode them.
 
 The current project hooks define:
 
-| Component | Configuration |
-|---|---|
-| Conda environment | `statelm`, Python 3.12.11 |
-| PyTorch | 2.6.0, CUDA 12.4 build |
-| Transformers | 4.55.3 |
-| datasets | 4.0.0 |
-| vLLM | 0.8.5.post1 |
-| Elasticsearch Python client | 9.1.1 |
-| Elasticsearch service | 9.1.5 Linux x86_64 archive with bundled JDK |
-| Service endpoint | `http://127.0.0.1:9200` |
-| Elasticsearch heap | 1 GB |
-| Accelerator requirement | None for Elasticsearch; model serving is separate |
+| Component                   | Configuration                                     |
+| --------------------------- | ------------------------------------------------- |
+| Conda environment           | `statelm`, Python 3.12.11                         |
+| PyTorch                     | 2.6.0, CUDA 12.4 build                            |
+| Transformers                | 4.55.3                                            |
+| datasets                    | 4.0.0                                             |
+| vLLM                        | 0.8.5.post1                                       |
+| Elasticsearch Python client | 9.1.1                                             |
+| Elasticsearch service       | 9.1.5 Linux x86_64 archive with bundled JDK       |
+| Service endpoint            | `http://127.0.0.1:9200`                           |
+| Elasticsearch heap          | 1 GB                                              |
+| Accelerator requirement     | None for Elasticsearch; model serving is separate |
 
 The Elasticsearch configuration is single-node, loopback-only, with security
 and Elasticsearch machine learning disabled. It is an evaluation service, not

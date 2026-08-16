@@ -2,7 +2,7 @@
 
 ## Tsinghua package mirrors
 
-The following Tsinghua endpoints were checked from blue on 2026-08-08 and
+The following Tsinghua endpoints were checked from the mainly used server on 2026-08-08 and
 returned HTTP 200:
 
 ```text
@@ -13,7 +13,7 @@ https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
 https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
 ```
 
-Check the required endpoint from blue before starting a large installation:
+Check the required endpoint from the server before starting a large installation:
 
 ```bash
 curl -L --fail --silent --show-error --output /dev/null \
