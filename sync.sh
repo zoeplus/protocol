@@ -2,23 +2,23 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BLUE_ENV_FILE="${BLUE_ENV_FILE:-$PROJECT_ROOT/.env.blue}"
+ENV_FILE="${ENV_FILE:-$PROJECT_ROOT/.env}"
 
-if [[ -f "$BLUE_ENV_FILE" ]]; then
+if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
-  source "$BLUE_ENV_FILE"
+  source "$ENV_FILE"
   set +a
 fi
 
-: "${BLUE_HOST:?Set BLUE_HOST in $BLUE_ENV_FILE or the shell environment}"
-: "${BLUE_PORT:?Set BLUE_PORT in $BLUE_ENV_FILE or the shell environment}"
-: "${BLUE_DIR:?Set BLUE_DIR in $BLUE_ENV_FILE or the shell environment}"
+: "${HOST:?Set HOST in $ENV_FILE or the shell environment}"
+: "${PORT:?Set PORT in $ENV_FILE or the shell environment}"
+: "${DIR:?Set DIR in $ENV_FILE or the shell environment}"
 
-REMOTE_HOST="$BLUE_HOST"
-REMOTE_PORT="$BLUE_PORT"
-REMOTE_DIR="$BLUE_DIR"
-REMOTE_BARE_DIR="${BLUE_GIT_DIR:-${BLUE_DIR}.git}"
+REMOTE_HOST="$HOST"
+REMOTE_PORT="$PORT"
+REMOTE_DIR="$DIR"
+REMOTE_BARE_DIR="${GIT_DIR:-${DIR}.git}"
 
 cd "$PROJECT_ROOT"
 
