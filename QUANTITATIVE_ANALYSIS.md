@@ -234,6 +234,23 @@ Report both aggregations because they answer different questions:
 - token-weighted retained prefix divides total retained-prefix tokens by total
   previous tokens and estimates the retained share of all eligible KV entries.
 
+Also aggregate eligible transitions by the action applied between the two
+requests. For every action label, report the transition count, previous-token
+count, common-prefix-token count, token-weighted retention, mean
+per-transition retention, and invalidated previous-token count. This
+action-level view is required: an overall rate can hide that ordinary append
+operations retain their full prefix while deletion, compression, or rewriting
+invalidates a much larger share.
+
+Use the normalized transition action label exactly as recorded. Keep combined
+multi-action labels combined unless the recorder can attribute a distinct
+resulting context to each action; do not assign the same context change to
+several actions. Use an explicit `no_action` label when a transition has no
+action name. The reference analyzer writes this decomposition to
+`summary.json` under
+`behavior.theoretical_cache_retention.by_action` and renders it in
+`report.md`.
+
 Exclude terminal snapshots without an observed next model call and do not join
 across missing trajectory indices. Record reconstruction failures separately.
 Call the result theoretical prefix retention, not an observed cache hit rate:

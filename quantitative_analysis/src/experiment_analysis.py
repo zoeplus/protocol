@@ -22,6 +22,7 @@ __all__ = [
     "ExperimentAnalysis",
     "analyze_experiment",
     "assign_tool_colors",
+    "cache_retention_by_action",
     "distribution",
     "extract_explicit_option",
     "extract_option",
@@ -188,6 +189,43 @@ def distribution(values: Iterable[float | int | None]) -> dict[str, float | int 
         "p95": percentile(clean, 0.95),
         "max": max(clean),
     }
+
+
+def cache_retention_by_action(
+    transitions: Iterable[dict[str, Any]], *, action_field: str = "tool",
+) -> list[dict[str, Any]]:
+    """Aggregate eligible theoretical KV-prefix transitions by action label."""
+    eligible = [
+        transition for transition in transitions
+        if transition.get("next_call_observed")
+        and transition.get("retained_ratio") is not None
+    ]
+    summaries = []
+    for action in sorted({str(row.get(action_field) or "no_action") for row in eligible}):
+        rows = [
+            row for row in eligible
+            if str(row.get(action_field) or "no_action") == action
+        ]
+        previous_tokens = sum(int(row["previous_token_count"]) for row in rows)
+        common_prefix_tokens = sum(
+            int(row["common_prefix_token_count"]) for row in rows
+        )
+        summaries.append({
+            "action": action,
+            "transition_count": len(rows),
+            "previous_token_count": previous_tokens,
+            "common_prefix_token_count": common_prefix_tokens,
+            "weighted_retention_rate": (
+                common_prefix_tokens / previous_tokens if previous_tokens else None
+            ),
+            "per_transition_retention": distribution(
+                row["retained_ratio"] for row in rows
+            ),
+            "invalidated_previous_token_count": sum(
+                int(row["invalidated_previous_token_count"]) for row in rows
+            ),
+        })
+    return summaries
 
 
 def wilson(successes: int, total: int, z: float = 1.959963984540054) -> list[float] | None:
@@ -967,6 +1005,19 @@ def markdown_report(summary: dict[str, Any]) -> str:
         f"{fmt(cache['next_prompt_vs_reported_delta']['p95'])} | "
         f"{fmt(cache['next_prompt_vs_reported_delta']['max'])} |",
     ])
+    if cache["by_action"]:
+        lines.extend([
+            "", "### Retention by preceding action", "",
+            "| Action | Transitions | Token-weighted retention | Mean transition retention | Invalidated previous tokens |",
+            "|---|---:|---:|---:|---:|",
+        ])
+        for action in cache["by_action"]:
+            lines.append(
+                f"| {action['action']} | {action['transition_count']} | "
+                f"{pct(action['weighted_retention_rate'])} | "
+                f"{pct(action['per_transition_retention']['mean'])} | "
+                f"{action['invalidated_previous_token_count']} |"
+            )
     lines.extend(["", "## Resource use", "", "| Per-sample metric | Mean | Median | P90 | P95 | Max |", "|---|---:|---:|---:|---:|---:|"])
     for key, label in (("api_call_count", "API calls"), ("tool_call_count", "Tool calls"),
                        ("prompt_tokens", "Prompt tokens"), ("completion_tokens", "Completion tokens"),
@@ -1158,6 +1209,7 @@ def analyze_experiment(
         "per_transition_retention": distribution(
             record["retained_ratio"] for record in observed_cache_rows
         ),
+        "by_action": cache_retention_by_action(cache_rows),
         "invalidated_previous_tokens": distribution(
             record["invalidated_previous_token_count"] for record in observed_cache_rows
         ),

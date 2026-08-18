@@ -22,7 +22,8 @@ writer. It derives:
 - trajectory-index and adjacent-context integrity diagnostics;
 - per-call context size and tool-colored context-growth/reduction charts;
 - optional theoretical token-prefix KV retention using the experiment's exact
-  tokenizer and chat template.
+  tokenizer and chat template, including action-level token-weighted and
+  per-transition retention with invalidated-token totals.
 
 `src/tool_neighborhood_analysis.py` performs a fast second-stage analysis from
 the generated `tool_calls.csv`. For any selected tool it reports exact
@@ -97,6 +98,21 @@ analysis = analyze_experiment(
 write_analysis(analysis)
 ```
 
+Offline analysis code may also directly import the pure action-level
+aggregator when the protocol repository's parent is on `PYTHONPATH`:
+
+```python
+from quantitative_analysis.src.experiment_analysis import cache_retention_by_action
+
+by_action = cache_retention_by_action(cache_transition_rows)
+```
+
+Pass `action_field="action_name"` when an adapter uses a different normalized
+field. The function filters out terminal or unreconstructed transitions and
+returns one generic row per observed action. Experiment-serving code should
+still copy the reference locally rather than adding a runtime dependency on
+the protocol repository.
+
 The core module has no third-party dependency. Token-prefix analysis accepts a
 project-supplied `context_tokenizer(messages, tools, add_generation_prompt)`
 callback, so frameworks can bind their exact renderer without depending on
@@ -115,6 +131,9 @@ assumptions in the project CLI or profile rather than the shared source.
   the fraction of prior KV entries retained across all eligible tokens; the
   unweighted mean describes the typical transition. Neither measures actual
   server cache hits, block alignment, eviction, or routing.
+- Inspect the action-level decomposition as well as the overall rate. Attribute
+  each transition to its recorded action label, preserve combined actions, and
+  exclude terminal snapshots without an observed next call.
 - Keep sequence analysis within sample boundaries and require exact adjacent
   trajectory indices; do not bridge missing calls.
 

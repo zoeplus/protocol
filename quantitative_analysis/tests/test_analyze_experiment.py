@@ -12,6 +12,52 @@ class AnalyzeExperimentTest(unittest.TestCase):
         self.assertEqual(ANALYZER.common_prefix_length([1, 2], [1, 2, 3]), 2)
         self.assertEqual(ANALYZER.common_prefix_length([], [1]), 0)
 
+    def test_cache_retention_by_action_is_token_weighted_and_importable(self):
+        transitions = [
+            {
+                "action_name": "delete",
+                "next_call_observed": True,
+                "retained_ratio": 0.5,
+                "previous_token_count": 100,
+                "common_prefix_token_count": 50,
+                "invalidated_previous_token_count": 50,
+            },
+            {
+                "action_name": "delete",
+                "next_call_observed": True,
+                "retained_ratio": 0.8,
+                "previous_token_count": 300,
+                "common_prefix_token_count": 240,
+                "invalidated_previous_token_count": 60,
+            },
+            {
+                "action_name": "search",
+                "next_call_observed": True,
+                "retained_ratio": 1.0,
+                "previous_token_count": 100,
+                "common_prefix_token_count": 100,
+                "invalidated_previous_token_count": 0,
+            },
+            {
+                "action_name": "terminal",
+                "next_call_observed": False,
+                "retained_ratio": 1.0,
+                "previous_token_count": 100,
+                "common_prefix_token_count": 100,
+                "invalidated_previous_token_count": 0,
+            },
+        ]
+
+        summary = ANALYZER.cache_retention_by_action(
+            transitions, action_field="action_name"
+        )
+
+        self.assertEqual([row["action"] for row in summary], ["delete", "search"])
+        self.assertEqual(summary[0]["transition_count"], 2)
+        self.assertEqual(summary[0]["weighted_retention_rate"], 290 / 400)
+        self.assertEqual(summary[0]["per_transition_retention"]["mean"], 0.65)
+        self.assertEqual(summary[0]["invalidated_previous_token_count"], 110)
+
     def test_tool_colors_are_generic_and_accept_overrides(self):
         colors = ANALYZER.assign_tool_colors(
             ("customSearch", "customDelete"), {"customDelete": "#123456"}
@@ -273,6 +319,11 @@ class AnalyzeExperimentTest(unittest.TestCase):
             self.assertEqual(cache["observed_transition_count"], 1)
             self.assertEqual(cache["terminal_snapshot_count"], 1)
             self.assertEqual(cache["weighted_retention_rate"], 1.0)
+            self.assertEqual(cache["by_action"][0]["action"], "no_tool")
+            self.assertEqual(cache["by_action"][0]["weighted_retention_rate"], 1.0)
+            report = ANALYZER.markdown_report(analysis.summary)
+            self.assertIn("Retention by preceding action", report)
+            self.assertIn("| no_tool | 1 | 100.0% |", report)
             self.assertEqual(analysis.cache_transitions[0]["common_prefix_token_count"], 3)
             self.assertFalse(analysis.cache_transitions[1]["next_call_observed"])
 
