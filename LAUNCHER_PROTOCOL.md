@@ -76,13 +76,15 @@ job lifecycle. Do not use several aliases for the same value in one script.
 | `METHOD_ID`         | Stable filesystem-safe agent or evaluation-method identity                        | Describes the method independently of the checkpoint.                                                                                      |
 | `MODEL_ID`          | Stable filesystem-safe checkpoint/model identity                                  | Describes the model independently of its API alias.                                                                                        |
 | `EXPERIMENT_ID`     | Stable project-local result identity, normally `<method>--<model>[--<condition>]` | Determines the result directory; it must not contain a timestamp or change merely to preserve logs.                                        |
-| `JOB_NAME`          | One process/service invocation identity                                           | Determines operational log and PID filenames; it may distinguish smoke, collection, or service jobs without changing `EXPERIMENT_ID`.      |
+| `JOB_NAME`          | Operational log/PID identity                                                      | Evaluation launchers set it to `EXPERIMENT_ID`; standalone services and setup jobs use an independent descriptive name.                    |
 | `LOG_DIR`           | Directory for operational logs                                                    | Default to `${LOG_DIR:-$HOME/logs}` on the server. `LOG_DIR` is the optional host-level override; launcher logic uses `LOG_DIR` afterward. |
 | `LOG_FILE`          | Log path for this invocation                                                      | Always derive as `$LOG_DIR/$JOB_NAME.log`; do not accept an independent override.                                                          |
 | `PID_FILE`          | PID/PGID path for this invocation                                                 | Always derive as `$LOG_FILE.pid`; do not accept an independent override.                                                                   |
 
-`EXPERIMENT_ID`, `JOB_NAME`, and `CONDA_ENV_NAME` identify different things and
-must never be substituted for one another. Do not introduce a generic
+`EXPERIMENT_ID` and `CONDA_ENV_NAME` identify different things and must never be
+substituted for one another. Evaluation launchers deliberately reuse
+`EXPERIMENT_ID` as `JOB_NAME` so the result directory, log, and PID are easy to
+match. Do not introduce a generic
 `ENVIRONMENT_ID`: dependency/runtime environments use `CONDA_ENV_NAME`, while
 an agent-environment catalog entry is documentation metadata rather than a
 launcher variable. Prefer descriptive names such as `DATASET_PATH`,
@@ -107,7 +109,8 @@ Wrapper launchers may set only the small set of defaults that differ, export
 them, and then `exec` the shared launcher. Use the caller-preserving form
 `export NAME="${NAME:-default}"`. Do not export `SCRIPT_DIR`, `SCRIPT_PATH`,
 `PROJECT_ROOT`, `LOG_FILE`, or `PID_FILE`, and do not recompute lifecycle paths
-in the wrapper. The shared launcher owns validation, worker mode, logging, PID
+in the wrapper. Evaluation wrappers set `export JOB_NAME="$EXPERIMENT_ID"`; do
+not maintain a second experiment-job label. The shared launcher owns validation, worker mode, logging, PID
 handling, and execution. When accepting a legacy variable such as `ENV_NAME`
 during migration, translate it once at the boundary, document the alias, and
 use only the canonical name internally.
@@ -131,7 +134,7 @@ EXPERIMENT_ID="${EXPERIMENT_ID:-method--model-name}"
 GPU_IDS="${GPU_IDS:-0}"
 PORT="${PORT:-8080}"
 LOG_DIR="${LOG_DIR:-$HOME/logs}"
-JOB_NAME="${JOB_NAME:-method-model-name-collect}"
+JOB_NAME="$EXPERIMENT_ID"
 LOG_FILE="$LOG_DIR/$JOB_NAME.log"
 PID_FILE="$LOG_FILE.pid"
 ```
@@ -148,10 +151,10 @@ LOG_FILE="$LOG_DIR/$JOB_NAME.log"
 PID_FILE="$LOG_FILE.pid"
 ```
 
-Use a stable, descriptive `JOB_NAME` that identifies the service or experiment
-configuration. Allow an environment override so independent runs can use
-separate logs without editing the script. Derive `LOG_FILE` and `PID_FILE` from
-that name, create `LOG_DIR`, and reject a duplicate live job before launch.
+For evaluations, set `JOB_NAME="$EXPERIMENT_ID"`. For standalone services and
+setup jobs, use a stable, descriptive `JOB_NAME` and allow an environment
+override. Derive `LOG_FILE` and `PID_FILE` from that name, create `LOG_DIR`, and
+reject a duplicate live job before launch.
 The PID written after `setsid` is also the process-group ID used for inspection
 and shutdown.
 

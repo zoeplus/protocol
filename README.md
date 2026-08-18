@@ -1,6 +1,6 @@
 # Server Principles
 
-This directory `$PROT` is the canonical, machine-independent home for the server
+This directory registered by environment variable `PROT` is the canonical, machine-independent home for the server
 (typically named blue) transport helper templates, as well as the quantitative analysis 
 framework. Future agents should inspect this file before touching the remote, then read
 the document relevant to the task.
@@ -44,6 +44,11 @@ expose those differences through environment variables and use one shared
 launcher. Add a separate script only when the execution flow, lifecycle, or
 required validation materially differs. Do not copy a launcher merely to
 provide different defaults; duplicated scripts increase drift and error risk.
+
+For a thin wrapper that only changes configuration defaults and delegates to an
+already verified launcher, review the diff and run only `bash -n` (plus a JSON
+syntax check for a new endpoint file). Do not add unit tests or run the full
+project test suite unless shared execution logic changed.
 
 Do not repeatedly assemble nested local-shell, SSH, command-substitution, and
 `awk` quoting for routine checks. Put a repeatable check in the responsible
