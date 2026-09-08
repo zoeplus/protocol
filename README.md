@@ -1,9 +1,9 @@
 # Server Principles
 
-This directory registered by environment variable `PROT` is the canonical, machine-independent home for the server
-(typically named blue) transport helper templates, as well as the quantitative analysis 
-framework. Future agents should inspect this file before touching the remote, then read
-the document relevant to the task.
+This directory registered by environment variable `PROT` is the canonical,
+machine-independent home for the server (typically named blue) transport helper
+templates. Future agents should inspect this file before touching the remote,
+then read the document relevant to the task.
 
 ## Documentation map
 
@@ -13,17 +13,10 @@ the document relevant to the task.
 | Long-running services, evaluations, process control, or launcher variables | [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md)         |
 | Package mirrors, downloads, or large installations                         | [`DOWNLOADS.md`](DOWNLOADS.md)                         |
 | Agent environment setup or reuse                                           | [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md)       |
-| Experiment results, trajectories, metrics, or analysis                     | [`QUANTITATIVE_ANALYSIS.md`](QUANTITATIVE_ANALYSIS.md) |
 
 Read only the relevant focused documents unless a task crosses their
 boundaries. The operating-efficiency and progress-control rules below apply to
 all work.
-
-Reusable reference implementations live beside their governing document:
-`result_recorder.py` covers capture, and
-[`quantitative_analysis/`](quantitative_analysis/README.md) covers deterministic
-derived analysis. Both must be copied and adapted into the owning project, not
-imported across repository boundaries.
 
 Before creating or renaming any launcher, check the filename routine in
 [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md). 
