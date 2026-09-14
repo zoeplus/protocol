@@ -68,6 +68,16 @@ files. `--log-pattern 'statelm-*'` additionally fetches matching files from
 on earlier command lines are not visible to a child script. This is always a
 one-way fetch from server to the local machine.
 
+Quote a glob in `--remote-path` so the remote shell expands it; every match is
+then copied into `--dest` under its own name, which fetches several
+same-prefix condition directories in one call:
+
+```bash
+./fetch.sh \
+  --remote-path 'results/webshop/raom-consolidate--qwen3-32b*' \
+  --dest "$PWD/results/webshop"
+```
+
 After transferring results, `fetch.sh` always performs a checksum-based
 `rsync --dry-run --delete` comparison. It exits with an error and prints the
 differences if the local destination is not an exact mirror of the remote

@@ -16,10 +16,12 @@ Usage:
   ./fetch.sh --remote-path PROJECT_RELATIVE_PATH [options]
 
 Required:
-  --remote-path PATH   Result directory relative to DIR.
+  --remote-path PATH   Result directory relative to DIR. A quoted glob is
+                       expanded on the remote, e.g. 'results/webshop/raom--*'.
 
 Options:
-  --dest PATH          Exact local destination directory.
+  --dest PATH          Exact local destination directory. Each glob match is
+                       copied here under its own remote name.
   --delete             Delete local entries absent from the remote directory.
   --log-pattern GLOB   Also fetch matching files from remote's ~/logs.
   -h, --help           Show this help.
@@ -28,6 +30,22 @@ Exported RESULTS_PATH, RESULTS_DEST, FETCH_DELETE, and
 LOG_PATTERN remain supported. Values merely assigned in a parent shell
 without export cannot be inherited by this script.
 EOF
+}
+
+fetch_logs() {
+  mkdir -p "$FETCH_DEST/logs"
+  echo "Fetching matching logs from $HOST:~/logs ($LOG_PATTERN)"
+  rsync \
+    --archive \
+    --human-readable \
+    --partial \
+    --prune-empty-dirs \
+    --include="$LOG_PATTERN" \
+    --exclude='*' \
+    --info=stats2,progress2 \
+    --rsh="$RSYNC_RSH" \
+    "$HOST:logs/" \
+    "$FETCH_DEST/logs/"
 }
 
 CLI_RESULTS_PATH=""
@@ -114,6 +132,67 @@ if [[ "$FETCH_DELETE" == "1" ]]; then
   RSYNC_DELETE_ARGS+=(--delete)
 fi
 
+# A quoted glob is expanded on the remote and every match keeps its own name
+# under --dest, so one call can fetch any number of same-prefix directories.
+case "$RESULTS_PATH" in
+  *[*?[]*)
+    mapfile -t REMOTE_MATCHES < <(
+      ssh -p "$PORT" "$HOST" "
+        for path in $DIR/$RESULTS_PATH; do
+          [ -e \"\$path\" ] && printf '%s\n' \"\$path\"
+        done
+      "
+    )
+    if [[ "${#REMOTE_MATCHES[@]}" -eq 0 ]]; then
+      echo "Error: remote pattern matched nothing (or listing failed): $HOST:$DIR/$RESULTS_PATH" >&2
+      exit 1
+    fi
+    echo "Resolved fetch:"
+    for match in "${REMOTE_MATCHES[@]}"; do
+      echo "  Remote: $HOST:$match -> $RESULTS_DEST/$(basename -- "$match")"
+    done
+    echo "  Delete: $FETCH_DELETE"
+    mkdir -p "$RESULTS_DEST"
+    for match in "${REMOTE_MATCHES[@]}"; do
+      echo "Fetching $HOST:$match"
+      rsync \
+        --archive \
+        --human-readable \
+        --partial \
+        "${RSYNC_DELETE_ARGS[@]}" \
+        --info=stats2,progress2 \
+        --rsh="$RSYNC_RSH" \
+        "$HOST:$match" \
+        "$RESULTS_DEST/"
+    done
+    echo "Verifying fetched trees with an rsync checksum dry run"
+    for match in "${REMOTE_MATCHES[@]}"; do
+      VERIFY_DIFF="$(
+        rsync \
+          --archive \
+          --checksum \
+          --delete \
+          --dry-run \
+          --itemize-changes \
+          --rsh="$RSYNC_RSH" \
+          "$HOST:$match" \
+          "$RESULTS_DEST/"
+      )"
+      if [[ -n "$VERIFY_DIFF" ]]; then
+        echo "Error: local result tree differs from the remote after fetch: $match" >&2
+        printf '%s\n' "$VERIFY_DIFF" >&2
+        exit 1
+      fi
+    done
+    echo "Verification complete: local and remote result trees match"
+    if [[ -n "$LOG_PATTERN" ]]; then
+      fetch_logs
+    fi
+    echo "Fetch complete: $RESULTS_DEST"
+    exit 0
+    ;;
+esac
+
 echo "Resolved fetch:"
 echo "  Remote: $HOST:$DIR/$RESULTS_PATH/"
 echo "  Local:  $RESULTS_DEST/"
@@ -152,19 +231,7 @@ fi
 echo "Verification complete: local and remote result trees match"
 
 if [[ -n "$LOG_PATTERN" ]]; then
-  mkdir -p "$FETCH_DEST/logs"
-  echo "Fetching matching logs from $HOST:~/logs ($LOG_PATTERN)"
-  rsync \
-    --archive \
-    --human-readable \
-    --partial \
-    --prune-empty-dirs \
-    --include="$LOG_PATTERN" \
-    --exclude='*' \
-    --info=stats2,progress2 \
-    --rsh="$RSYNC_RSH" \
-    "$HOST:logs/" \
-    "$FETCH_DEST/logs/"
+  fetch_logs
 fi
 
 echo "Fetch complete: $RESULTS_DEST"
