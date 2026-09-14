@@ -1,9 +1,9 @@
 # Server Principles
 
 This directory registered by environment variable `PROT` is the canonical,
-machine-independent home for the server (typically named blue) transport helper
-templates. Future agents should inspect this file before touching the remote,
-then read the document relevant to the task.
+machine-independent home for the server transport helper templates. Future
+agents should inspect this file before touching the remote, then read the
+document relevant to the task.
 
 ## Documentation map
 
