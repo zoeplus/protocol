@@ -2,8 +2,7 @@
 
 ## Tsinghua package mirrors
 
-The following Tsinghua endpoints were checked from the mainly used server on 2026-08-08 and
-returned HTTP 200:
+The following Tsinghua endpoints were checked from the mainly an anonymous server:
 
 ```text
 https://pypi.tuna.tsinghua.edu.cn/simple/
@@ -40,6 +39,22 @@ Conda or pip settings:
   --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
+## USTC package mirrors
+
+The following USTC endpoints were checked from an anonymous server:
+
+```text
+https://pypi.mirrors.ustc.edu.cn/simple/                         # HTTP 200 in 4.56s
+https://mirrors.ustc.edu.cn/anaconda/cloud/conda-forge/          # repodata.json.zst: 57.5 MB in 7.71s (7.46 MB/s)
+```
+
+Use USTC for a Conda-forge installation on this server:
+
+```bash
+/opt/conda/bin/conda create -n <env-name> python=<version> pip -y \
+  --override-channels \
+  -c https://mirrors.ustc.edu.cn/anaconda/cloud/conda-forge
+```
 
 ## Large downloads
 
