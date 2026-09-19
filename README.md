@@ -5,14 +5,20 @@ machine-independent home for the server transport helper templates. Future
 agents should inspect this file before touching the remote, then read the
 document relevant to the task.
 
+This repo is developed specifically for short-term usage server 
+that the user's resources are likely to be released sooner or later,
+or user who might need to migrate assets between servers,
+By making the remote repo as exact mirrors of the local, <u>the agent mainly 
+works on the local source code</u>, and the remote can easily sync with the local.
+
 ## Documentation map
 
-| Task                                                                       | Required document                                      |
-| -------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Source synchronization, result transfer, or vault layout                   | [`PROJECT_SYNC.md`](PROJECT_SYNC.md)                   |
-| Long-running services, evaluations, process control, or launcher variables | [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md)         |
-| Package mirrors, downloads, or large installations                         | [`DOWNLOADS.md`](DOWNLOADS.md)                         |
-| Agent environment setup or reuse                                           | [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md)       |
+| Task                                                                       | Required document                                |
+| -------------------------------------------------------------------------- | ------------------------------------------------ |
+| Source synchronization, result transfer, or vault layout                   | [`PROJECT_SYNC.md`](PROJECT_SYNC.md)             |
+| Long-running services, evaluations, process control, or launcher variables | [`LAUNCHER_PROTOCOL.md`](LAUNCHER_PROTOCOL.md)   |
+| Package mirrors, downloads, or large installations                         | [`DOWNLOADS.md`](DOWNLOADS.md)                   |
+| Agent environment setup or reuse                                           | [`AGENT_ENVIRONMENTS.md`](AGENT_ENVIRONMENTS.md) |
 
 Read only the relevant focused documents unless a task crosses their
 boundaries. The operating-efficiency and progress-control rules below apply to
